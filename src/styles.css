@@ -88,18 +88,18 @@
     box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
-.prediction-alert {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #fff;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    max-width: 300px;
-    z-index: 1000;
-    animation: slideIn 0.3s ease;
-}
+/*.prediction-alert {*/
+/*    position: fixed;*/
+/*    right: 20px;*/
+/*    background: #fff;*/
+/*    padding: 15px;*/
+/*    border-radius: 10px;*/
+/*    box-shadow: 0 4px 20px rgba(0,0,0,0.15);*/
+/*    max-width: 300px;*/
+/*    height: 70px; !* Фиксированная высота *!*/
+/*    z-index: 1000;*/
+/*    animation: slideIn 0.3s ease;*/
+/*}*/
 
 @keyframes slideIn {
     from { transform: translateX(100%); opacity: 0; }
@@ -114,4 +114,120 @@
     border-radius: 5px;
     font-size: 12px;
     color: white;
+}
+
+
+/* Стили для контейнера предсказаний */
+.predictions-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    max-width: 350px;
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+/* Базовые стили для предсказаний */
+.prediction-alert {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    margin-bottom: 10px;
+    transition: all 0.3s ease-in-out;
+    border-left: 4px solid #ccc;
+}
+
+/* Стили по severity */
+.prediction-negative {
+    background: #ffebee;
+    border-left: 4px solid #f44336;
+}
+
+.prediction-normal {
+    background: #fff3e0;
+    border-left: 4px solid #f8e16d;
+}
+
+.prediction-positive {
+    background: #e8f5e8;
+    border-left: 4px solid #4caf50;
+}
+
+.prediction-no-data {
+    background: #f0f0f0;
+    border-left: 4px solid #ccc;
+}
+
+/* Анимация для новых предсказаний */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+        max-height: 0;
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        max-height: 200px;
+    }
+}
+
+.new-prediction {
+    animation: slideDown 0.4s ease-out;
+}
+
+/* Стили для текста внутри предсказаний */
+.prediction-text {
+    margin: 0;
+}
+
+.prediction-severity {
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 14px;
+}
+
+.prediction-message {
+    margin: 5px 0;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.prediction-timestamp {
+    font-size: 12px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Обновите анимацию slideIn для горизонтального появления */
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Стили для скроллбара */
+.predictions-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.predictions-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.predictions-container::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.predictions-container::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }

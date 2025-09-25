@@ -12,15 +12,16 @@ import {
 } from "recharts";
 
 const ChartPanel = React.memo(({ data }) => {
-    if (data.length === 0) {
-        return <div style={{ textAlign: "center", color: "#666" }}>Ожидание данных...</div>;
-    }
-
-    const TIME_WINDOW = 60;
+    const TIME_WINDOW = 30;
     const maxTime = data[data.length - 1]?.timeSec || 0;
     const filteredData = useMemo(() => {
         return data.filter(d => maxTime - d.timeSec <= TIME_WINDOW);
     }, [data, maxTime]);
+    const latestRisk = filteredData[filteredData.length - 1]?.riskComplications || "N/A";
+
+    if (filteredData.length === 0) {
+        return <div style={{ textAlign: "center", color: "#666" }}>Ожидание данных...</div>;
+    }
 
     return (
         <div className="chart-container">
@@ -49,41 +50,55 @@ const ChartPanel = React.memo(({ data }) => {
                         animationDuration={300}
                     />
                     <YAxis
-                        label={{ value: "Значение", angle: -90, position: "insideLeft", fill: "#666" }}
+                        yAxisId="left"
+                        label={{ value: "ЧСС/Утерус", angle: -90, position: "insideLeft", fill: "#666" }}
                         tick={{ fill: "#666" }}
                         domain={['auto', 'auto']}
                         animationDuration={300}
                     />
                     <Tooltip
                         labelFormatter={(value) => `Время: ${value} сек`}
-                        formatter={(value, name) => [value, name === "bpm" ? "ЧСС (BPM)" : "Утерус"]}
+                        formatter={(value, name) => [
+                            value,
+                            name === "bpm" ? "ЧСС (BPM)" : "Утерус",
+                        ]}
                     />
                     <Legend />
                     <Area
+                        yAxisId="left"
                         type="monotone"
                         dataKey="uterus"
                         stroke="#82ca9d"
                         fillOpacity={1}
                         fill="url(#uterusGradient)"
                         name="Утерус (фон)"
-                        animationBegin={filteredData.length - 1} // Анимация только для последней точки
+                        animationBegin={filteredData.length - 1}
                         animationDuration={300}
                     />
                     <Line
+                        yAxisId="left"
                         type="monotone"
                         dataKey="bpm"
                         stroke="#8884d8"
                         strokeWidth={3}
                         dot={false}
                         name="ЧСС (BPM)"
-                        animationBegin={filteredData.length - 1} // Анимация только для последней точки
+                        animationBegin={filteredData.length - 1}
                         animationDuration={300}
                         activeDot={{ r: 6 }}
                     />
                 </AreaChart>
             </ResponsiveContainer>
-            <p style={{ textAlign: "center", color: "#888", fontSize: "12px", marginTop: "10px" }}>
-                Последнее обновление: {maxTime} сек
+            <p style={{ textAlign: "center", color: "#888", fontSize: "20px", marginTop: "10px" }}>
+                Последнее обновление: {maxTime} сек,
+                <span style={{
+                    marginLeft: "10px",
+                    color: latestRisk < 20 ? "#4CAF50" :
+                        latestRisk < 70 ? "#FFC107" : "#F44336",
+                    fontWeight: "bold",
+                    fontSize: "20px"}}>
+                    Риск осложнений: {latestRisk} %
+                </span>
             </p>
         </div>
     );
