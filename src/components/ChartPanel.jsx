@@ -51,7 +51,7 @@ const ChartPanel = React.memo(({ data }) => {
                     />
                     <YAxis
                         yAxisId="left"
-                        label={{ value: "ЧСС/Утерус", angle: -90, position: "insideLeft", fill: "#666" }}
+                        label={{ value: "Утерус", angle: -90, position: "insideLeft", fill: "#666" }}
                         tick={{ fill: "#666" }}
                         domain={['auto', 'auto']}
                         animationDuration={300}
@@ -60,7 +60,8 @@ const ChartPanel = React.memo(({ data }) => {
                         labelFormatter={(value) => `Время: ${value} сек`}
                         formatter={(value, name) => [
                             value,
-                            name === "bpm" ? "ЧСС (BPM)" : "Утерус",
+                            // name === "bpm" ? "BPM" : "Uterus",
+                            name
                         ]}
                     />
                     <Legend />
@@ -71,7 +72,7 @@ const ChartPanel = React.memo(({ data }) => {
                         stroke="#82ca9d"
                         fillOpacity={1}
                         fill="url(#uterusGradient)"
-                        name="Утерус (фон)"
+                        name="Uterus"
                         animationBegin={filteredData.length - 1}
                         animationDuration={300}
                     />
@@ -82,7 +83,7 @@ const ChartPanel = React.memo(({ data }) => {
                         stroke="#8884d8"
                         strokeWidth={3}
                         dot={false}
-                        name="ЧСС (BPM)"
+                        name="BPM"
                         animationBegin={filteredData.length - 1}
                         animationDuration={300}
                         activeDot={{ r: 6 }}
