@@ -1,0 +1,14 @@
+.container {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+.indicator {
+    width: 100px;
+    height: 20px;
+    margin-top: 10px;
+    text-align: center;
+    color: white;
+    line-height: 20px;
+    border-radius: 4px;
+}
