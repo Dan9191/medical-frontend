@@ -9,43 +9,48 @@ let stompClient = null;
 function App() {
     const [status, setStatus] = useState(null);
     const [data, setData] = useState([]);
-    const [predictions, setPredictions] = useState([]); // Массив последних предсказаний
+    const [predictions, setPredictions] = useState([]);
     const [isConnected, setIsConnected] = useState(false);
     const MAX_DATA_POINTS = 100;
+    const TIME_WINDOW = 60;
 
     useEffect(() => {
         const socket = new SockJS("http://localhost:8099/ws");
         stompClient = new Client({
             webSocketFactory: () => socket,
             debug: (str) => console.log(str),
-            reconnectDelay: 5000, // Автопереподключение
+            reconnectDelay: 5000,
         });
 
         stompClient.onConnect = () => {
             setIsConnected(true);
             console.log("✅ Connected to backend");
 
-            // Статус (с diagnoses)
             stompClient.subscribe("/topic/status", (msg) => {
                 const parsed = JSON.parse(msg.body);
                 setStatus(parsed);
                 console.log("📢 STATUS:", parsed);
             });
 
-            // Данные для графика
             stompClient.subscribe("/topic/data", (msg) => {
                 const parsed = JSON.parse(msg.body);
-                setData((prev) => {
-                    const newData = [...prev, ...parsed.items];
-                    return newData.length > MAX_DATA_POINTS ? newData.slice(-MAX_DATA_POINTS) : newData;
-                });
-                console.log("📊 DATA:", parsed);
+                if (parsed.timeSec != null && parsed.bpm != null && parsed.uterus != null) {
+                    setData((prev) => {
+                        const newData = [...prev, parsed];
+                        const maxTime = parsed.timeSec; // Используем timeSec новой точки
+                        return newData
+                            .filter(d => maxTime - d.timeSec <= TIME_WINDOW)
+                            .slice(-MAX_DATA_POINTS);
+                    });
+                    console.log("📊 DATA:", parsed);
+                } else {
+                    console.warn("Invalid data point:", parsed);
+                }
             });
 
-            // Новый топик предсказаний
             stompClient.subscribe("/topic/predictions", (msg) => {
                 const parsed = JSON.parse(msg.body);
-                setPredictions((prev) => [parsed, ...prev].slice(0, 5)); // Храним последние 5
+                setPredictions((prev) => [parsed, ...prev].slice(0, 5));
                 console.log("🔮 PREDICTION:", parsed);
             });
         };
@@ -70,7 +75,6 @@ function App() {
         };
     }, []);
 
-    // Очистка данных при новом старте
     useEffect(() => {
         if (status?.type === "START") {
             setData([]);
@@ -80,12 +84,9 @@ function App() {
 
     return (
         <div className="container">
-            {/* Индикатор подключения */}
             <div className="connection-status" style={{ background: isConnected ? "#4caf50" : "#f44336" }}>
                 {isConnected ? "🟢 Подключено" : "🔴 Отключено"}
             </div>
-
-            {/* Header с пациентом */}
             <div className="header">
                 <div className="patient-info">
                     <h1>Пациент: {status?.firstName || "Неизвестно"} {status?.lastName || ""}</h1>
@@ -99,8 +100,6 @@ function App() {
                     {status?.type || "WAITING"}
                 </div>
             </div>
-
-            {/* Статус и диагнозы */}
             <div className="status-info">
                 <p><strong>Статус:</strong> {status?.type} ({status?.info})</p>
                 {status?.diagnoses && status.diagnoses.length > 0 && (
@@ -114,11 +113,7 @@ function App() {
                     </div>
                 )}
             </div>
-
-            {/* График */}
             <ChartPanel data={data} />
-
-            {/* Предсказания как уведомления */}
             {predictions.map((pred, idx) => (
                 <div
                     key={idx}
