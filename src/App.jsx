@@ -119,7 +119,7 @@ function App() {
                         background: status?.inStream ? "#4caf50" : "#f44336",
                     }}
                 >
-                    {status?.inStream ? "START" : "FINISH"}
+                    {status?.inStream ? "IN PROGRESS" : "FINISH"}
                 </div>
             </div>
             <div className="status-info">
