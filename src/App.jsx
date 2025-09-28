@@ -20,9 +20,9 @@ function App() {
     useEffect(() => {
         const fetchPatientData = async () => {
             try {
-                const patientResponse = await fetch(`${deviceHttpUrl}/v1/device/patient`);
+                const patientResponse = await fetch(`${deviceHttpUrl}/patient`);
                 const patientData = await patientResponse.json();
-                const statusResponse = await fetch(`${deviceHttpUrl}/v1/device/status`);
+                const statusResponse = await fetch(`${deviceHttpUrl}/status`);
                 const inStream = await statusResponse.json();
                 setStatus({ ...patientData, inStream });
                 console.log("📢 PATIENT DATA:", patientData);

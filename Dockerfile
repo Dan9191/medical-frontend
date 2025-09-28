@@ -11,7 +11,7 @@ RUN npm ci --silent
 COPY . .
 
 # Build with env vars (they will be baked in)
-ARG REACT_APP_DEVICE_HTTP=https://api-device.kumiko.pro
+ARG REACT_APP_DEVICE_HTTP=https://api-device.kumiko.pro/v1/device
 ARG REACT_APP_DEVICE_WS=wss://api-device.kumiko.pro/ws
 ENV REACT_APP_DEVICE_HTTP=$REACT_APP_DEVICE_HTTP
 ENV REACT_APP_DEVICE_WS=$REACT_APP_DEVICE_WS
