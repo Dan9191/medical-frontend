@@ -13,8 +13,8 @@ function App() {
     const [isConnected, setIsConnected] = useState(false);
     const MAX_DATA_POINTS = 100;
     const TIME_WINDOW = 120;
-    const deviceHttpUrl = process.env.REACT_APP_DEVICE_HTTP || '/v1/device';
-    const deviceWsUrl = process.env.REACT_APP_DEVICE_WS || '/ws';
+    const deviceHttpUrl = process.env.REACT_APP_DEVICE_HTTP || 'http://localhost:8099/v1/device';
+    const deviceWsUrl = process.env.REACT_APP_DEVICE_WS || 'http://localhost:8099/ws"';
 
     // REST-запросы для получения данных пациента и статуса
     useEffect(() => {

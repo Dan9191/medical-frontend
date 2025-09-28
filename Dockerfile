@@ -7,12 +7,11 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --silent
 
-# Copy source code
+# Copy source code and build
 COPY . .
-
 # Build with env vars (they will be baked in)
-ARG REACT_APP_DEVICE_HTTP=/v1/device
-ARG REACT_APP_DEVICE_WS=/ws
+ARG REACT_APP_DEVICE_HTTP
+ARG REACT_APP_DEVICE_WS
 ENV REACT_APP_DEVICE_HTTP=$REACT_APP_DEVICE_HTTP
 ENV REACT_APP_DEVICE_WS=$REACT_APP_DEVICE_WS
 
@@ -24,8 +23,10 @@ FROM nginx:alpine
 # Copy built app from build stage
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy nginx.conf template
-COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
+# Copy custom nginx.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Substitute environment variables in nginx.conf and start Nginx
-CMD ["/bin/sh", "-c", "envsubst '${BACKEND_HTTP_URL} ${BACKEND_WS_URL} ${BACKEND_HOST}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
+# Expose port
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
