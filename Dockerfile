@@ -27,5 +27,5 @@ COPY --from=build /app/build /usr/share/nginx/html
 # Copy nginx.conf template
 COPY nginx.conf.template /etc/nginx/conf.d/default.conf.template
 
-# Substitute environment variables in nginx.conf
-CMD envsubst '${BACKEND_HTTP_URL} ${BACKEND_WS_URL} ${BACKEND_HOST}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'
+# Substitute environment variables in nginx.conf and start Nginx
+CMD ["/bin/sh", "-c", "envsubst '${BACKEND_HTTP_URL} ${BACKEND_WS_URL} ${BACKEND_HOST}' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
