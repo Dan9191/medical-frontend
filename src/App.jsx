@@ -12,15 +12,17 @@ function App() {
     const [predictions, setPredictions] = useState([]);
     const [isConnected, setIsConnected] = useState(false);
     const MAX_DATA_POINTS = 100;
-    const TIME_WINDOW = 30;
+    const TIME_WINDOW = 120;
+    const deviceHttpUrl = process.env.REACT_APP_DEVICE_HTTP || 'http://localhost:8099';
+    const deviceWsUrl = process.env.REACT_APP_DEVICE_HTTP || 'http://localhost:8099/ws"';
 
     // REST-запросы для получения данных пациента и статуса
     useEffect(() => {
         const fetchPatientData = async () => {
             try {
-                const patientResponse = await fetch("http://localhost:8099/v1/device/patient");
+                const patientResponse = await fetch(`${deviceHttpUrl}/v1/device/patient`);
                 const patientData = await patientResponse.json();
-                const statusResponse = await fetch("http://localhost:8099/v1/device/status");
+                const statusResponse = await fetch(`${deviceHttpUrl}/v1/device/status`);
                 const inStream = await statusResponse.json();
                 setStatus({ ...patientData, inStream });
                 console.log("📢 PATIENT DATA:", patientData);
@@ -46,7 +48,7 @@ function App() {
 
     // WebSocket для данных и предсказаний
     useEffect(() => {
-        const socket = new SockJS("http://localhost:8099/ws");
+        const socket = new SockJS(deviceWsUrl);
         stompClient = new Client({
             webSocketFactory: () => socket,
             debug: (str) => console.log(str),
