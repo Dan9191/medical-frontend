@@ -7,11 +7,12 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --silent
 
-# Copy source code and build
+# Copy source code
 COPY . .
+
 # Build with env vars (they will be baked in)
-ARG REACT_APP_DEVICE_HTTP
-ARG REACT_APP_DEVICE_WS
+ARG REACT_APP_DEVICE_HTTP=http://medical-device-service.medical-device-backend-ns.svc.cluster.local:8099
+ARG REACT_APP_DEVICE_WS=ws://medical-device-service.medical-device-backend-ns.svc.cluster.local:8099/ws
 ENV REACT_APP_DEVICE_HTTP=$REACT_APP_DEVICE_HTTP
 ENV REACT_APP_DEVICE_WS=$REACT_APP_DEVICE_WS
 
