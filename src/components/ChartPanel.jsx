@@ -11,14 +11,24 @@ import {
 } from "recharts";
 
 const ChartPanel = React.memo(({ data }) => {
-    // Обработка данных: установить null для значений 0.0, чтобы график не обнулялся
+    // Обработка данных: фильтровать аномалии и установить null для значений 0.0
     const processedData = useMemo(() => {
-        return data.map(d => ({
-            ...d,
-            timeSec: Math.round(d.timeSec), // Округляем время для отображения
-            uterus: d.uterus === 0.0 ? null : d.uterus,
-            bpm: d.bpm === 0.0 ? null : d.bpm,
-        }));
+        console.log("📊 Processed data input:", data); // Отладка входных данных
+        return data
+            .filter(d =>
+                d.timeSec != null &&
+                Number.isFinite(d.timeSec) &&
+                d.uterus != null &&
+                Number.isFinite(d.uterus) &&
+                d.bpm != null &&
+                Number.isFinite(d.bpm)
+            )
+            .map(d => ({
+                ...d,
+                timeSec: Math.round(d.timeSec),
+                uterus: d.uterus === 0.0 || d.uterus < 0 || d.uterus > 100 ? null : d.uterus,
+                bpm: d.bpm === 0.0 || d.bpm < 0 || d.bpm > 200 ? null : d.bpm,
+            }));
     }, [data]);
 
     const maxTime = processedData[processedData.length - 1]?.timeSec || 0;
@@ -27,6 +37,8 @@ const ChartPanel = React.memo(({ data }) => {
     if (processedData.length === 0) {
         return <div style={{ textAlign: "center", color: "#666" }}>Ожидание данных...</div>;
     }
+
+    console.log("📊 Processed data output:", processedData); // Отладка обработанных данных
 
     return (
         <div className="chart-container" style={{ width: "100%", overflowX: "auto" }}>
@@ -62,7 +74,9 @@ const ChartPanel = React.memo(({ data }) => {
                         <YAxis
                             label={{ value: "Утерус", angle: -90, position: "insideLeft", fill: "#666" }}
                             tick={{ fill: "#666" }}
-                            domain={[0, 150]}
+                            domain={[0, 150]} // Фиксированный интервал
+                            allowDataOverflow={true} // Разрешить данные вне диапазона
+                            tickCount={6} // Деления: 0, 20, 40, 60, 80, 100
                             animationDuration={300}
                         />
                         <Tooltip
@@ -77,7 +91,7 @@ const ChartPanel = React.memo(({ data }) => {
                             fillOpacity={1}
                             fill="url(#uterusGradient)"
                             name="Uterus"
-                            connectNulls={false} // Прерывать график при null
+                            connectNulls={false}
                             animationDuration={300}
                         />
                     </AreaChart>
@@ -110,7 +124,9 @@ const ChartPanel = React.memo(({ data }) => {
                         <YAxis
                             label={{ value: "BPM", angle: -90, position: "insideLeft", fill: "#666" }}
                             tick={{ fill: "#666" }}
-                            domain={[0, 250]} // Фиксированный интервал для BPM
+                            domain={[0, 250]} // Фиксированный интервал
+                            allowDataOverflow={true} // Разрешить данные вне диапазона
+                            tickCount={5} // Деления: 0, 50, 100, 150, 200
                             animationDuration={300}
                         />
                         <Tooltip
@@ -125,7 +141,7 @@ const ChartPanel = React.memo(({ data }) => {
                             fillOpacity={1}
                             fill="url(#bpmGradient)"
                             name="BPM"
-                            connectNulls={false} // Прерывать график при null
+                            connectNulls={false}
                             animationDuration={300}
                         />
                     </AreaChart>
