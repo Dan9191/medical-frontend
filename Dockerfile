@@ -10,8 +10,11 @@ RUN npm ci --silent
 # Copy source code and build
 COPY . .
 # Build with env vars (they will be baked in)
-ARG REACT_APP_API_URL
-ARG REACT_APP_WS_URL
+ARG REACT_APP_DEVICE_HTTP
+ARG REACT_APP_DEVICE_WS
+ENV REACT_APP_DEVICE_HTTP=$REACT_APP_DEVICE_HTTP
+ENV REACT_APP_DEVICE_WS=$REACT_APP_DEVICE_WS
+
 RUN npm run build
 
 # Stage 2: Serve with Nginx
