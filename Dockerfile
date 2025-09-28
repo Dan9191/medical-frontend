@@ -1,43 +1,33 @@
-# --- Сборка фронтенда ---
+# --- stage 1: build react app ---
 FROM node:20-alpine AS build
-
 WORKDIR /app
 
-# Прокидываем переменные для React
-ARG REACT_APP_DEVICE_HTTP
-ARG REACT_APP_DEVICE_WS
-
-ENV REACT_APP_DEVICE_HTTP=$REACT_APP_DEVICE_HTTP
-ENV REACT_APP_DEVICE_WS=$REACT_APP_DEVICE_WS
-
+# установка зависимостей
 COPY package*.json ./
 RUN npm ci
 
+# копируем исходники
 COPY . .
+
+# передаём адрес API (будет доступен как process.env.REACT_APP_API_BASE_URL)
+ARG REACT_APP_DEVICE_HTTP
+ARG REACT_APP_DEVICE_WS
+ENV REACT_APP_DEVICE_HTTP=$REACT_APP_DEVICE_HTTP
+ENV REACT_APP_DEVICE_WS=$REACT_APP_DEVICE_WS
+
+# сборка
 RUN npm run build
 
-
-# --- Сервер на nginx ---
+# --- stage 2: serve with nginx ---
 FROM nginx:alpine
 
-# Аргументы для nginx-конфига
-ARG BACKEND_HTTP_URL
-ARG BACKEND_WS_URL
-ARG BACKEND_HOST
+# удаляем дефолтный конфиг
+RUN rm /etc/nginx/conf.d/default.conf
 
-# Понадобится gettext для envsubst
-RUN apk add --no-cache gettext
+# свой конфиг для SPA (всегда отдаём index.html)
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Копируем шаблон nginx-конфига
-COPY nginx.conf.template /etc/nginx/conf.d/nginx.conf.template
-
-# Подставляем значения ARG → nginx.conf
-RUN envsubst '${BACKEND_HTTP_URL} ${BACKEND_WS_URL} ${BACKEND_HOST}' \
-      < /etc/nginx/conf.d/nginx.conf.template \
-      > /etc/nginx/conf.d/default.conf \
-    && rm /etc/nginx/conf.d/nginx.conf.template
-
-# Копируем собранный фронт
+# копируем собранный билд
 COPY --from=build /app/build /usr/share/nginx/html
 
 EXPOSE 80
