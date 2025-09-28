@@ -62,7 +62,7 @@ const ChartPanel = React.memo(({ data }) => {
                         <YAxis
                             label={{ value: "Утерус", angle: -90, position: "insideLeft", fill: "#666" }}
                             tick={{ fill: "#666" }}
-                            domain={['auto', 'auto']}
+                            domain={[0, 150]}
                             animationDuration={300}
                         />
                         <Tooltip
@@ -83,7 +83,7 @@ const ChartPanel = React.memo(({ data }) => {
                     </AreaChart>
                 </ResponsiveContainer>
 
-                {/* График для BPM (в стиле Uterus) */}
+                {/* График для BPM */}
                 <ResponsiveContainer width="100%" height={200} style={{ marginTop: "20px" }}>
                     <AreaChart
                         data={processedData}
@@ -110,7 +110,7 @@ const ChartPanel = React.memo(({ data }) => {
                         <YAxis
                             label={{ value: "BPM", angle: -90, position: "insideLeft", fill: "#666" }}
                             tick={{ fill: "#666" }}
-                            domain={['auto', 'auto']}
+                            domain={[0, 250]} // Фиксированный интервал для BPM
                             animationDuration={300}
                         />
                         <Tooltip

@@ -78,7 +78,7 @@ function App() {
             stompClient.subscribe("/topic/predictions", (msg) => {
                 const parsed = JSON.parse(msg.body);
                 if (parsed.message && parsed.severity && parsed.timestamp) {
-                    setPredictions((prev) => [parsed, ...prev]); // Новые добавляются в начало
+                    setPredictions((prev) => [parsed, ...prev.slice(0, 6)]); // количество виджетов с предиктом
                     console.log("🔮 PREDICTION:", parsed);
                 } else {
                     console.warn("Invalid prediction:", parsed);
