@@ -62,8 +62,8 @@ jobs:
           git config user.email "ci@github"
           git config user.name "GitHub Actions"
 
-          yq -i '.spec.template.spec.containers[0].image = "ghcr.io/${{ env.REPO_OWNER_LC}}/medical-frontend:sha-${{ github.sha }}"' apps/frontend/blog/staging/deployment.yaml
+          yq -i '.spec.template.spec.containers[0].image = "ghcr.io/${{ env.REPO_OWNER_LC}}/medical-frontend:sha-${{ github.sha }}"' apps/frontend/device/deployment.yaml
 
-          git add apps/frontend/blog/staging/deployment.yaml
+          git add apps/frontend/device/deployment.yaml
           git commit -m "Update medical-frontend image to sha-${{ github.sha }}"
           git push origin main
