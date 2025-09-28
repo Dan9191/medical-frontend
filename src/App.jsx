@@ -20,34 +20,15 @@ function App() {
     useEffect(() => {
         const fetchPatientData = async () => {
             try {
-                const patientResponse = await fetch(`${deviceHttpUrl}/patient`, {
-                    method: 'GET',
-                    credentials: 'include',  // Передаёт куки для аутентификации
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                if (!patientResponse.ok) {
-                    throw new Error(`HTTP error! Status: ${patientResponse.status}`);
-                }
+                const patientResponse = await fetch(`${deviceHttpUrl}/patient`);
                 const patientData = await patientResponse.json();
-
-                const statusResponse = await fetch(`${deviceHttpUrl}/status`, {
-                    method: 'GET',
-                    credentials: 'include',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                });
-                if (!statusResponse.ok) {
-                    throw new Error(`HTTP error! Status: ${statusResponse.status}`);
-                }
+                const statusResponse = await fetch(`${deviceHttpUrl}/status`);
                 const inStream = await statusResponse.json();
                 setStatus({ ...patientData, inStream });
                 console.log("📢 PATIENT DATA:", patientData);
                 console.log("📢 STATUS:", inStream);
             } catch (error) {
-                console.error("Error fetching patient/status:", error.message);
+                console.error("Error fetching patient/status:", error);
             }
         };
 
@@ -55,7 +36,7 @@ function App() {
         const interval = setInterval(fetchPatientData, 10000); // Каждые 10 секунд
 
         return () => clearInterval(interval);
-    }, [deviceHttpUrl]);
+    }, []);
 
     // Очистка данных и предсказаний при смене пациента
     useEffect(() => {
@@ -67,7 +48,7 @@ function App() {
 
     // WebSocket для данных и предсказаний
     useEffect(() => {
-        const socket = new SockJS(deviceWsUrl, null, { withCredentials: true });
+        const socket = new SockJS(deviceWsUrl);
         stompClient = new Client({
             webSocketFactory: () => socket,
             debug: (str) => console.log(str),
@@ -97,7 +78,7 @@ function App() {
             stompClient.subscribe("/topic/predictions", (msg) => {
                 const parsed = JSON.parse(msg.body);
                 if (parsed.message && parsed.severity && parsed.timestamp) {
-                    setPredictions((prev) => [parsed, ...prev.slice(0, 4)]);
+                    setPredictions((prev) => [parsed, ...prev]); // Новые добавляются в начало
                     console.log("🔮 PREDICTION:", parsed);
                 } else {
                     console.warn("Invalid prediction:", parsed);
@@ -123,37 +104,7 @@ function App() {
                 setIsConnected(false);
             }
         };
-    }, [deviceWsUrl]);
-
-    // Дефолтный UI при отсутствии данных (чтобы избежать белого экрана)
-    if (!status) {
-        return (
-            <div className="container">
-                <div className="connection-status" style={{ background: isConnected ? "#4caf50" : "#f44336" }}>
-                    {isConnected ? "🟢 Подключено" : "🔴 Отключено"}
-                </div>
-                <div className="header">
-                    <div className="patient-info">
-                        <h1>Пациент: Загрузка...</h1>
-                    </div>
-                    <div className="indicator" style={{ background: "#f44336" }}>
-                        FINISH
-                    </div>
-                </div>
-                <div className="status-info">
-                    <p><strong>Статус:</strong> Ожидание данных...</p>
-                </div>
-                <ChartPanel data={data} />
-                <div className="predictions-container">
-                    <div className="prediction-alert prediction-no-data">
-                        <div className="prediction-text">
-                            Нет предсказаний на данный момент.
-                        </div>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    }, []);
 
     return (
         <div className="container">
