@@ -16,29 +16,24 @@ function App() {
     const deviceHttpUrl = process.env.REACT_APP_DEVICE_HTTP || 'http://localhost:8099/v1/device';
     const deviceWsUrl = process.env.REACT_APP_DEVICE_WS || 'http://localhost:8099/ws';
 
-    // REST-запросы для получения данных пациента и статуса
+    // Получение данных пациента
     useEffect(() => {
         const fetchPatientData = async () => {
             try {
-                const patientResponse = await fetch(`${deviceHttpUrl}/patient`);
-                const patientData = await patientResponse.json();
-                const statusResponse = await fetch(`${deviceHttpUrl}/status`);
-                const inStream = await statusResponse.json();
-                setStatus({ ...patientData, inStream });
-                console.log("📢 PATIENT DATA:", patientData);
-                console.log("📢 STATUS:", inStream);
+                const response = await fetch(`${deviceHttpUrl}/patient`);
+                const patientData = await response.json();
+                setStatus(patientData);
             } catch (error) {
-                console.error("Error fetching patient/status:", error);
+                console.error("Ошибка получения данных пациента:", error);
             }
         };
 
-        fetchPatientData(); // Первоначальный запрос
-        const interval = setInterval(fetchPatientData, 10000); // Каждые 10 секунд
-
+        fetchPatientData();
+        const interval = setInterval(fetchPatientData, 10000);
         return () => clearInterval(interval);
     }, []);
 
-    // Очистка данных и предсказаний при смене пациента
+    // Очистка данных при смене пациента
     useEffect(() => {
         if (status?.id) {
             setData([]);
@@ -46,56 +41,46 @@ function App() {
         }
     }, [status?.id]);
 
-    // WebSocket для данных и предсказаний
+    // WebSocket подключение
     useEffect(() => {
         const socket = new SockJS(deviceWsUrl);
         stompClient = new Client({
             webSocketFactory: () => socket,
-            debug: (str) => console.log(str),
             reconnectDelay: 5000,
         });
 
         stompClient.onConnect = () => {
             setIsConnected(true);
-            console.log("✅ Connected to backend");
-
             stompClient.subscribe("/topic/data", (msg) => {
                 const parsed = JSON.parse(msg.body);
-                if (parsed.timeSec != null && parsed.bpm != null && parsed.uterus != null && parsed.riskComplications != null) {
-                    setData((prev) => {
-                        const newData = [...prev, parsed];
-                        const maxTime = parsed.timeSec;
-                        return newData
-                            .filter(d => maxTime - d.timeSec <= TIME_WINDOW)
-                            .slice(-MAX_DATA_POINTS);
-                    });
-                    console.log("📊 DATA:", parsed);
-                } else {
-                    console.warn("Invalid data point:", parsed);
+                if (parsed.timeSec != null && parsed.bpm != null && parsed.uterus != null) {
+                    setData((prev) => [
+                        ...prev.filter(d => parsed.timeSec - d.timeSec <= TIME_WINDOW),
+                        parsed,
+                    ].slice(-MAX_DATA_POINTS));
                 }
             });
 
             stompClient.subscribe("/topic/predictions", (msg) => {
                 const parsed = JSON.parse(msg.body);
-                if (parsed.message && parsed.severity && parsed.timestamp) {
-                    setPredictions((prev) => [parsed, ...prev.slice(0, 6)]); // количество виджетов с предиктом
-                    console.log("🔮 PREDICTION:", parsed);
+                console.log("Received prediction:", parsed, "Severity:", parsed.severity || "MISSING");
+                if (parsed.message && parsed.severity && parsed.timestamp && parsed.riskComplication != null) {
+                    // Нормализация severity
+                    const severity = parsed.severity.toLowerCase().trim();
+                    if (["negative", "normal", "positive"].includes(severity)) {
+                        parsed.severity = severity;
+                        setPredictions((prev) => [parsed, ...prev.slice(0, 6)]);
+                    } else {
+                        console.warn("Invalid severity value:", severity);
+                    }
                 } else {
-                    console.warn("Invalid prediction:", parsed);
+                    console.warn("Incomplete prediction data:", parsed);
                 }
             });
         };
 
-        stompClient.onStompError = (frame) => {
-            console.error("STOMP error:", frame);
-            setIsConnected(false);
-        };
-
-        stompClient.onWebSocketError = (error) => {
-            console.error("WebSocket error:", error);
-            setIsConnected(false);
-        };
-
+        stompClient.onStompError = () => setIsConnected(false);
+        stompClient.onWebSocketError = () => setIsConnected(false);
         stompClient.activate();
 
         return () => {
@@ -108,27 +93,18 @@ function App() {
 
     return (
         <div className="container">
-            <div className="connection-status" style={{ background: isConnected ? "#4caf50" : "#f44336" }}>
+            <div className={`connection-status ${isConnected ? "connected" : "disconnected"}`}>
                 {isConnected ? "🟢 Подключено" : "🔴 Отключено"}
             </div>
             <div className="header">
-                <div className="patient-info">
-                    <h1>Пациент: {status?.name || "Неизвестно"}</h1>
-                </div>
-                <div
-                    className="indicator"
-                    style={{
-                        background: status?.inStream ? "#4caf50" : "#f44336",
-                    }}
-                >
-                    {status?.inStream ? "IN PROGRESS" : "FINISH"}
+                <h1>Пациент: {status?.name || "Неизвестно"}</h1>
+                <div className={`indicator ${status?.status ? "in-progress" : "finished"}`}>
+                    {status?.status ? "IN PROGRESS" : "FINISH"}
                 </div>
             </div>
             <div className="status-info">
-                <p>
-                    <strong>Статус:</strong> {status?.inStream ? "Мониторинг активен" : "Мониторинг завершён"}
-                </p>
-                {status?.diagnoses && status.diagnoses.length > 0 && (
+                <p><strong>Статус:</strong> {status?.status ? "Мониторинг активен" : "Мониторинг завершён"}</p>
+                {status?.diagnoses?.length > 0 && (
                     <div className="diagnoses">
                         <strong>Диагнозы:</strong>
                         <ul>
@@ -145,13 +121,11 @@ function App() {
                 {status?.lac && <p><strong>Лактат:</strong> {status.lac}</p>}
                 {status?.be && <p><strong>BE:</strong> {status.be}</p>}
             </div>
-            <ChartPanel data={data} />
+            <ChartPanel data={data} predictions={predictions} />
             <div className="predictions-container">
                 {predictions.length === 0 ? (
                     <div className="prediction-alert prediction-no-data">
-                        <div className="prediction-text">
-                            Нет предсказаний на данный момент.
-                        </div>
+                        Нет предсказаний на данный момент.
                     </div>
                 ) : (
                     predictions.map((pred, idx) => (
